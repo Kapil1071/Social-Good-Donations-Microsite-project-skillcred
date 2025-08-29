@@ -1,26 +1,13 @@
 {
-  "name": "social-good-donations-microsite",
+  "name": "social-good-donations-microsite-functions",
   "version": "1.0.0",
+  "description": "Backend functions for the Social Good Donations Microsite.",
   "private": true,
-  "description": "Serverless functions for the donation microsite.",
-  "main": "index.js",
-  "scripts": {
-    "dev": "remix vite:dev",
-    "build": "remix vite:build",
-    "start": "remix-serve ./build",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@google/genai": "^1.16.0",
-    "resend": "^3.2.0",
-    "@remix-run/react": "^2.13.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@remix-run/dev": "^2.13.1",
-    "vite": "^5.4.8"
+    "@netlify/functions": "^4.2.5",
+    "resend": "^3.2.0"
   }
 }
