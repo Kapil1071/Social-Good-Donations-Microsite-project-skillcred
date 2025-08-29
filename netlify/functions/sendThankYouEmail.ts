@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import sgMail from '@sendgrid/mail';
+import { Resend } from 'resend';
 import type { Handler, HandlerEvent, HandlerContext } from "@netlify/functions";
 import type { DonationDetails } from '../../types';
 
@@ -36,20 +36,21 @@ const generateThankYouMessage = async (donorName: string, amount: number): Promi
     return response.text;
 };
 
-
 const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
     // Securely get API keys from environment variables
-    const sendGridApiKey = process.env.SENDGRID_API_KEY;
+    const resendApiKey = process.env.RESEND_API_KEY;
     const senderEmail = process.env.SENDER_EMAIL;
 
-    if (!sendGridApiKey || !senderEmail) {
-        console.error("Missing SendGrid or Sender Email configuration.");
+    if (!resendApiKey || !senderEmail) {
+        console.error("Missing Resend API Key or Sender Email configuration.");
         return { statusCode: 500, body: JSON.stringify({ error: "Server configuration error." }) };
     }
+
+    const resend = new Resend(resendApiKey);
 
     try {
         const { name, email, amount } = JSON.parse(event.body || '{}') as DonationDetails;
@@ -60,17 +61,13 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
         // 1. Generate the personalized message using Gemini AI
         const thankYouMessage = await generateThankYouMessage(name, amount);
 
-        // 2. Send the email using SendGrid
-        sgMail.setApiKey(sendGridApiKey);
-        const msg = {
+        // 2. Send the email using Resend
+        await resend.emails.send({
+            from: senderEmail, // Must be a verified domain or 'onboarding@resend.dev'
             to: email,
-            from: senderEmail, // Use your verified sender email
             subject: `Thank You for Your Generous Donation to Hope Foundation!`,
-            text: thankYouMessage, // For clients that don't render HTML
             html: `<div style="font-family: sans-serif; line-height: 1.6;">${thankYouMessage.replace(/\n\n/g, '<br><br>')}</div>`,
-        };
-
-        await sgMail.send(msg);
+        });
 
         // 3. Return the generated message to the frontend to display in the modal
         return {
@@ -81,9 +78,10 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
 
     } catch (error) {
         console.error("Error in sendThankYouEmail function:", error);
+        const errorMessage = (error instanceof Error) ? error.message : "An unknown error occurred.";
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "An error occurred while processing your donation's thank you message." }),
+            body: JSON.stringify({ error: `An error occurred while processing your donation's thank you message: ${errorMessage}` }),
         };
     }
 };
