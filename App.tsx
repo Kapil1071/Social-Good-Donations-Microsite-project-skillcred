@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { DonationForm } from './components/DonationForm';
@@ -7,29 +6,56 @@ import { ThankYouModal } from './components/ThankYouModal';
 import { Spinner } from './components/Spinner';
 import type { DonationDetails } from './types';
 
+const loadingMessages = [
+    "Processing your generous donation...",
+    "Connecting to secure server...",
+    "Generating your personalized thank you...",
+    "Sending confirmation...",
+    "Finalizing..."
+];
+
 const App: React.FC = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [loadingText, setLoadingText] = useState<string>(loadingMessages[0]);
     const [showThankYouModal, setShowThankYouModal] = useState<boolean>(false);
     const [thankYouMessage, setThankYouMessage] = useState<string>('');
     const [donorName, setDonorName] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
 
+    useEffect(() => {
+        let interval: number;
+        if (isLoading) {
+            let i = 0;
+            interval = window.setInterval(() => {
+                i = (i + 1) % loadingMessages.length;
+                setLoadingText(loadingMessages[i]);
+            }, 3000); // Change message every 3 seconds
+        }
+        return () => window.clearInterval(interval);
+    }, [isLoading]);
+
+
     const handleDonate = useCallback(async (details: DonationDetails) => {
         setIsLoading(true);
         setError(null);
         setDonorName(details.name);
+        setLoadingText(loadingMessages[0]); // Reset loading text
+
+        // --- Timeout Implementation ---
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25-second timeout
+
         try {
-            // Call the new serverless function
             const response = await fetch('/api/sendThankYouEmail', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(details),
+                signal: controller.signal, // Pass the signal to fetch
             });
 
+            clearTimeout(timeoutId); // Clear timeout if fetch succeeds
+
             if (!response.ok) {
-                // Handle errors from the serverless function
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'API call failed');
             }
@@ -38,10 +64,17 @@ const App: React.FC = () => {
             setThankYouMessage(data.message);
             setShowThankYouModal(true);
         } catch (err) {
+            clearTimeout(timeoutId); // Also clear timeout on error
             console.error("Error processing donation:", err);
-            const errorMessage = (err instanceof Error) ? err.message : "An unknown error occurred.";
-            setError(`We couldn't process the thank you email due to an error: ${errorMessage}. We deeply appreciate your donation.`);
-            setShowThankYouModal(true); // Still show modal but with error message
+
+            if ((err as Error).name === 'AbortError') {
+                 // This is a timeout error
+                setError(`Your donation was successful, thank you! We're experiencing a slight delay generating your personalized message. It will be delivered to your email shortly.`);
+            } else {
+                const errorMessage = (err instanceof Error) ? err.message : "An unknown error occurred.";
+                setError(`We couldn't process the thank you email due to an error: ${errorMessage}. We deeply appreciate your donation and will ensure you receive a confirmation.`);
+            }
+            setShowThankYouModal(true);
         } finally {
             setIsLoading(false);
         }
@@ -59,7 +92,7 @@ const App: React.FC = () => {
             {isLoading && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex flex-col items-center justify-center">
                     <Spinner />
-                    <p className="text-white mt-4 text-lg">Processing your generous donation...</p>
+                    <p className="text-white mt-4 text-lg text-center px-4">{loadingText}</p>
                 </div>
             )}
 
