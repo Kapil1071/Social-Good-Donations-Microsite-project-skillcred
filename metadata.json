@@ -1,0 +1,5 @@
+{
+  "name": "Social Good Donations Microsite",
+  "description": "A one-page site using a headless CMS integrated with Razorpay for payments. After donation, an LLM generates a personalized thank you email and a summary of the impact made, emailed automatically to donors.",
+  "requestFramePermissions": []
+}

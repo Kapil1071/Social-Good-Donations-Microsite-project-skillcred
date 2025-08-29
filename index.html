@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Social Good Donations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-primary': '#0D9488', // Teal 600
+              'brand-secondary': '#F0FDF4', // Green 50
+              'brand-accent': '#FBBF24', // Amber 400
+              'brand-dark': '#1F2937', // Gray 800
+              'brand-light': '#F9FAFB', // Gray 50
+            },
+          }
+        }
+      }
+    </script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.16.0",
+    "@netlify/functions": "https://aistudiocdn.com/@netlify/functions@^4.2.5",
+    "@sendgrid/mail": "https://aistudiocdn.com/@sendgrid/mail@^8.1.5"
+  }
+}
+</script>
+</head>
+  <body class="bg-brand-light">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
